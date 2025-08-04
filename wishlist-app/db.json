@@ -1,0 +1,31 @@
+{
+  "wishlistItems": [
+    {
+      "id": "1754194162108",
+      "title": "Canon Powershot S200",
+      "description": "camera go brrrr",
+      "price": 80,
+      "imageUrl": "https://m.media-amazon.com/images/I/81-waw-cV8L._AC_SX679_.jpg",
+      "isPurchased": false,
+      "purchaseUrl": "https://www.amazon.com/Canon-PowerShot-Digital-Camera-Optical/dp/B0000645C9"
+    },
+    {
+      "id": "1754194446574",
+      "title": "airpods",
+      "description": "my old ones broke :(",
+      "price": 120,
+      "imageUrl": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/ed0cfc76-5b94-4e84-af82-a3cc7cff60e4.jpg;maxHeight=1920;maxWidth=900?format=webp",
+      "isPurchased": false,
+      "purchaseUrl": "https://www.bestbuy.com/site/apple-airpods-4-white/6447384.p?skuId=6447384&extStoreId=499&utm_source=feed&ref=212&loc=21698362010&gclsrc=aw.ds&gad_source=1&gad_campaignid=21702195532&gbraid=0AAAAAD-ORIiKc3tFxwYSbDoqwpZUtVL5j&gclid=CjwKCAjw7rbEBhB5EiwA1V49nSLsBeF0FxTJgebfCKpzSifJBmtsctQ91ErHAdf-Pd8uR5mYebIniRoCnjgQAvD_BwE"
+    },
+    {
+      "id": "1754194550882",
+      "title": "Sony - WH1000XM4 Wireless Noise-Cancelling Over-the-Ear Headphones - Silver",
+      "description": "I WANT BIG HEADPHONE",
+      "price": 199.99,
+      "imageUrl": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6408/6408357_rd.jpg;maxHeight=1920;maxWidth=900?format=webp",
+      "isPurchased": false,
+      "purchaseUrl": "https://www.bestbuy.com/site/sony-wh1000xm4-wireless-noise-cancelling-over-the-ear-headphones-silver/6408357.p?skuId=6408357&extStoreId=499&utm_source=feed&ref=212&loc=18511139454&gclsrc=aw.ds&gad_source=1&gad_campaignid=18514017595&gbraid=0AAAAAD-ORIhoUqO7esx_U7AcP1pBA2n6U&gclid=CjwKCAjw7rbEBhB5EiwA1V49nZWI3bbnao-_1RC5zFFhVbgQ1SXp0z1jM8bbot_USHnWiJTj_xUpZhoCkwkQAvD_BwE"
+    }
+  ]
+}
