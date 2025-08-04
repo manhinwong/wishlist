@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const port = 8000;
+const port = process.env.PORT || 8000;
 const distPath = path.join(__dirname, 'dist');
 
 const server = http.createServer((req, res) => {
