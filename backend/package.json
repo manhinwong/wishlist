@@ -2,9 +2,10 @@
   "name": "wishlist-backend",
   "version": "1.0.0",
   "description": "Backend for wishlist app",
+  "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "json-server --watch db.json --port $PORT --host 0.0.0.0",
+    "start": "node server.js",
     "dev": "json-server --watch db.json --port 3001"
   },
   "dependencies": {
