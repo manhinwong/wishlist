@@ -13,6 +13,7 @@
     "vercel-build": "npm run build"
   },
   "dependencies": {
+    "@vercel/postgres": "^0.10.0",
     "picomatch": "^4.0.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

@@ -1,25 +1,25 @@
-import fs from 'fs'
-import path from 'path'
+import { sql } from '@vercel/postgres'
 
-// Path to the db.json file
-const dbPath = path.join(process.cwd(), 'db.json')
-
-// Helper to read the database
-const readDB = () => {
+// Initialize the database table if it doesn't exist
+async function initDB() {
   try {
-    const data = fs.readFileSync(dbPath, 'utf8')
-    return JSON.parse(data)
+    await sql`
+      CREATE TABLE IF NOT EXISTS wishlist_items (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        price DECIMAL(10,2) NOT NULL,
+        image_url TEXT,
+        is_purchased BOOLEAN DEFAULT FALSE,
+        purchase_url TEXT
+      )
+    `
   } catch (error) {
-    return { wishlistItems: [] }
+    console.error('Error initializing database:', error)
   }
 }
 
-// Helper to write to the database
-const writeDB = (data) => {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2))
-}
-
-export default function handler(req, res) {
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
@@ -30,27 +30,50 @@ export default function handler(req, res) {
     return res.status(200).end()
   }
 
-  const db = readDB()
+  // Initialize database
+  await initDB()
+
   const { id } = req.query
 
   try {
     switch (req.method) {
       case 'GET':
-        // Get all items or a specific item
         if (id) {
-          const item = db.wishlistItems.find(item => item.id === id)
-          if (!item) {
+          // Get a specific item
+          const { rows } = await sql`
+            SELECT id, title, description, price,
+                   image_url as "imageUrl",
+                   is_purchased as "isPurchased",
+                   purchase_url as "purchaseUrl"
+            FROM wishlist_items
+            WHERE id = ${id}
+          `
+          if (rows.length === 0) {
             return res.status(404).json({ error: 'Item not found' })
           }
-          return res.status(200).json(item)
+          return res.status(200).json(rows[0])
+        } else {
+          // Get all items
+          const { rows } = await sql`
+            SELECT id, title, description, price,
+                   image_url as "imageUrl",
+                   is_purchased as "isPurchased",
+                   purchase_url as "purchaseUrl"
+            FROM wishlist_items
+            ORDER BY id DESC
+          `
+          return res.status(200).json(rows)
         }
-        return res.status(200).json(db.wishlistItems)
 
       case 'POST':
         // Create a new item
         const newItem = req.body
-        db.wishlistItems.push(newItem)
-        writeDB(db)
+        await sql`
+          INSERT INTO wishlist_items (id, title, description, price, image_url, is_purchased, purchase_url)
+          VALUES (${newItem.id}, ${newItem.title}, ${newItem.description},
+                  ${newItem.price}, ${newItem.imageUrl}, ${newItem.isPurchased || false},
+                  ${newItem.purchaseUrl || null})
+        `
         return res.status(201).json(newItem)
 
       case 'PUT':
@@ -58,25 +81,25 @@ export default function handler(req, res) {
         if (!id) {
           return res.status(400).json({ error: 'ID is required' })
         }
-        const itemIndex = db.wishlistItems.findIndex(item => item.id === id)
-        if (itemIndex === -1) {
-          return res.status(404).json({ error: 'Item not found' })
-        }
-        db.wishlistItems[itemIndex] = req.body
-        writeDB(db)
-        return res.status(200).json(req.body)
+        const updatedItem = req.body
+        await sql`
+          UPDATE wishlist_items
+          SET title = ${updatedItem.title},
+              description = ${updatedItem.description},
+              price = ${updatedItem.price},
+              image_url = ${updatedItem.imageUrl},
+              is_purchased = ${updatedItem.isPurchased},
+              purchase_url = ${updatedItem.purchaseUrl || null}
+          WHERE id = ${id}
+        `
+        return res.status(200).json(updatedItem)
 
       case 'DELETE':
         // Delete an item
         if (!id) {
           return res.status(400).json({ error: 'ID is required' })
         }
-        const deleteIndex = db.wishlistItems.findIndex(item => item.id === id)
-        if (deleteIndex === -1) {
-          return res.status(404).json({ error: 'Item not found' })
-        }
-        db.wishlistItems.splice(deleteIndex, 1)
-        writeDB(db)
+        await sql`DELETE FROM wishlist_items WHERE id = ${id}`
         return res.status(204).end()
 
       default:
@@ -84,6 +107,6 @@ export default function handler(req, res) {
     }
   } catch (error) {
     console.error('API Error:', error)
-    return res.status(500).json({ error: 'Internal server error' })
+    return res.status(500).json({ error: 'Internal server error', details: error.message })
   }
 }
