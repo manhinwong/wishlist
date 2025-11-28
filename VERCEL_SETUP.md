@@ -1,62 +1,76 @@
 # Vercel Deployment Setup
 
-## Prerequisites
-- A Vercel account (free tier works)
-- This repository pushed to GitHub
+## Quick Setup (5 minutes!)
 
-## Steps to Deploy
+Your wishlist app is ready to deploy on Vercel's free tier. Follow these simple steps:
 
-### 1. Create a Vercel Postgres Database
+### 1. Create a Vercel KV Database
 
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Click on the "Storage" tab
-3. Click "Create Database"
-4. Select "Postgres"
-5. Choose a name (e.g., "wishlist-db")
+2. Click on the **"Storage"** tab
+3. Click **"Create Database"**
+4. Select **"KV"** (Redis-based key-value store)
+5. Give it a name like "wishlist-kv"
 6. Select a region close to you
-7. Click "Create"
+7. Click **"Create"**
 
-### 2. Connect Database to Your Project
+### 2. Connect to Your Project
 
-1. Go to your Vercel project dashboard
-2. Go to Settings → Environment Variables
-3. Vercel should automatically suggest connecting your Postgres database
-4. Click "Connect" to add the database environment variables
-5. The following variables will be automatically added:
-   - `POSTGRES_URL`
-   - `POSTGRES_PRISMA_URL`
-   - `POSTGRES_URL_NON_POOLING`
-   - `POSTGRES_USER`
-   - `POSTGRES_HOST`
-   - `POSTGRES_PASSWORD`
-   - `POSTGRES_DATABASE`
+1. After creating the database, click on it
+2. Go to the **"Connect"** tab or click **"Connect Project"**
+3. Select your wishlist project from the dropdown
+4. Click **"Connect"**
+5. This automatically adds the required environment variables:
+   - `KV_REST_API_URL`
+   - `KV_REST_API_TOKEN`
+   - `KV_REST_API_READ_ONLY_TOKEN`
+   - `KV_URL`
 
-### 3. Deploy
+### 3. Deploy!
 
-1. Push your code to GitHub (already done!)
-2. Vercel will automatically redeploy
-3. The database table will be created automatically on first request
+That's it! Vercel will automatically redeploy your app with the new database connection.
 
-### 4. Migrate Existing Data (Optional)
+Your wishlist will start with the default items and persist all changes.
 
-If you want to import your existing wishlist items from `db.json`, you can add them manually through the app's UI, or run this SQL in the Vercel Postgres query editor:
+## What You Get (All FREE!)
 
-```sql
-INSERT INTO wishlist_items (id, title, description, price, image_url, is_purchased, purchase_url)
-VALUES
-  ('1754194162108', 'Canon Powershot S200', 'camera go brrrr', 80, 'https://m.media-amazon.com/images/I/81-waw-cV8L._AC_SX679_.jpg', false, 'https://www.amazon.com/Canon-PowerShot-Digital-Camera-Optical/dp/B0000645C9'),
-  ('1754194446574', 'airpods', 'my old ones broke :(', 120, 'https://pisces.bbystatic.com/image2/BestBuy_US/images/products/ed0cfc76-5b94-4e84-af82-a3cc7cff60e4.jpg;maxHeight=1920;maxWidth=900?format=webp', false, 'https://www.bestbuy.com/site/apple-airpods-4-white/6447384.p?skuId=6447384'),
-  ('1754194550882', 'Sony - WH1000XM4 Wireless Noise-Cancelling Over-the-Ear Headphones - Silver', 'I WANT BIG HEADPHONE', 199.99, 'https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6408/6408357_rd.jpg;maxHeight=1920;maxWidth=900?format=webp', false, 'https://www.bestbuy.com/site/sony-wh1000xm4-wireless-noise-cancelling-over-the-ear-headphones-silver/6408357.p?skuId=6408357');
+- ✅ **Vercel Hosting** - Free frontend hosting
+- ✅ **Vercel KV** - Free Redis database (256MB storage)
+- ✅ **Serverless API** - No backend server needed
+- ✅ **No CORS errors** - Everything on same domain
+- ✅ **Persistent storage** - Your data is saved permanently
+- ✅ **Auto-scaling** - Handles traffic automatically
+
+## Free Tier Limits
+
+Vercel KV Free Tier includes:
+- 256 MB storage
+- 10,000 commands per day
+- 1 GB bandwidth per month
+
+This is more than enough for a personal wishlist app!
+
+## Local Development
+
+For local development, the app uses json-server on port 3001:
+
+```bash
+# Terminal 1: Start the backend
+npm run server
+
+# Terminal 2: Start the frontend
+npm run dev
 ```
 
-## That's it!
+Visit `http://localhost:5173` to see your app locally.
 
-Your wishlist app should now be fully functional on Vercel with persistent database storage!
+## Troubleshooting
 
-## Cost
+**If you see errors on Vercel:**
+1. Make sure you've created and connected the KV database
+2. Check that environment variables are set in your Vercel project settings
+3. Try redeploying from the Vercel dashboard
 
-- Vercel Hosting: **Free** (Hobby plan)
-- Vercel Postgres: **Free** tier includes:
-  - 256 MB storage
-  - 60 hours of compute per month
-  - Perfect for a personal wishlist app!
+**Common issues:**
+- **"405 Method Not Allowed"** - KV database not connected yet
+- **"500 Internal Server Error"** - Check environment variables in Vercel dashboard

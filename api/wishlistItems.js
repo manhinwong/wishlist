@@ -1,23 +1,37 @@
-import { sql } from '@vercel/postgres'
+import { kv } from '@vercel/kv'
 
-// Initialize the database table if it doesn't exist
-async function initDB() {
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS wishlist_items (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT,
-        price DECIMAL(10,2) NOT NULL,
-        image_url TEXT,
-        is_purchased BOOLEAN DEFAULT FALSE,
-        purchase_url TEXT
-      )
-    `
-  } catch (error) {
-    console.error('Error initializing database:', error)
+const WISHLIST_KEY = 'wishlistItems'
+
+// Default wishlist items
+const DEFAULT_ITEMS = [
+  {
+    "id": "1754194162108",
+    "title": "Canon Powershot S200",
+    "description": "camera go brrrr",
+    "price": 80,
+    "imageUrl": "https://m.media-amazon.com/images/I/81-waw-cV8L._AC_SX679_.jpg",
+    "isPurchased": false,
+    "purchaseUrl": "https://www.amazon.com/Canon-PowerShot-Digital-Camera-Optical/dp/B0000645C9"
+  },
+  {
+    "id": "1754194446574",
+    "title": "airpods",
+    "description": "my old ones broke :(",
+    "price": 120,
+    "imageUrl": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/ed0cfc76-5b94-4e84-af82-a3cc7cff60e4.jpg;maxHeight=1920;maxWidth=900?format=webp",
+    "isPurchased": false,
+    "purchaseUrl": "https://www.bestbuy.com/site/apple-airpods-4-white/6447384.p?skuId=6447384"
+  },
+  {
+    "id": "1754194550882",
+    "title": "Sony - WH1000XM4 Wireless Noise-Cancelling Over-the-Ear Headphones - Silver",
+    "description": "I WANT BIG HEADPHONE",
+    "price": 199.99,
+    "imageUrl": "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6408/6408357_rd.jpg;maxHeight=1920;maxWidth=900?format=webp",
+    "isPurchased": false,
+    "purchaseUrl": "https://www.bestbuy.com/site/sony-wh1000xm4-wireless-noise-cancelling-over-the-ear-headphones-silver/6408357.p?skuId=6408357"
   }
-}
+]
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -30,50 +44,36 @@ export default async function handler(req, res) {
     return res.status(200).end()
   }
 
-  // Initialize database
-  await initDB()
-
   const { id } = req.query
 
   try {
+    // Get all items from KV store
+    let items = await kv.get(WISHLIST_KEY)
+
+    // Initialize with default items if none exist
+    if (!items) {
+      items = DEFAULT_ITEMS
+      await kv.set(WISHLIST_KEY, items)
+    }
+
     switch (req.method) {
       case 'GET':
         if (id) {
           // Get a specific item
-          const { rows } = await sql`
-            SELECT id, title, description, price,
-                   image_url as "imageUrl",
-                   is_purchased as "isPurchased",
-                   purchase_url as "purchaseUrl"
-            FROM wishlist_items
-            WHERE id = ${id}
-          `
-          if (rows.length === 0) {
+          const item = items.find(item => item.id === id)
+          if (!item) {
             return res.status(404).json({ error: 'Item not found' })
           }
-          return res.status(200).json(rows[0])
-        } else {
-          // Get all items
-          const { rows } = await sql`
-            SELECT id, title, description, price,
-                   image_url as "imageUrl",
-                   is_purchased as "isPurchased",
-                   purchase_url as "purchaseUrl"
-            FROM wishlist_items
-            ORDER BY id DESC
-          `
-          return res.status(200).json(rows)
+          return res.status(200).json(item)
         }
+        // Get all items
+        return res.status(200).json(items)
 
       case 'POST':
         // Create a new item
         const newItem = req.body
-        await sql`
-          INSERT INTO wishlist_items (id, title, description, price, image_url, is_purchased, purchase_url)
-          VALUES (${newItem.id}, ${newItem.title}, ${newItem.description},
-                  ${newItem.price}, ${newItem.imageUrl}, ${newItem.isPurchased || false},
-                  ${newItem.purchaseUrl || null})
-        `
+        items.push(newItem)
+        await kv.set(WISHLIST_KEY, items)
         return res.status(201).json(newItem)
 
       case 'PUT':
@@ -81,25 +81,25 @@ export default async function handler(req, res) {
         if (!id) {
           return res.status(400).json({ error: 'ID is required' })
         }
-        const updatedItem = req.body
-        await sql`
-          UPDATE wishlist_items
-          SET title = ${updatedItem.title},
-              description = ${updatedItem.description},
-              price = ${updatedItem.price},
-              image_url = ${updatedItem.imageUrl},
-              is_purchased = ${updatedItem.isPurchased},
-              purchase_url = ${updatedItem.purchaseUrl || null}
-          WHERE id = ${id}
-        `
-        return res.status(200).json(updatedItem)
+        const itemIndex = items.findIndex(item => item.id === id)
+        if (itemIndex === -1) {
+          return res.status(404).json({ error: 'Item not found' })
+        }
+        items[itemIndex] = req.body
+        await kv.set(WISHLIST_KEY, items)
+        return res.status(200).json(req.body)
 
       case 'DELETE':
         // Delete an item
         if (!id) {
           return res.status(400).json({ error: 'ID is required' })
         }
-        await sql`DELETE FROM wishlist_items WHERE id = ${id}`
+        const deleteIndex = items.findIndex(item => item.id === id)
+        if (deleteIndex === -1) {
+          return res.status(404).json({ error: 'Item not found' })
+        }
+        items.splice(deleteIndex, 1)
+        await kv.set(WISHLIST_KEY, items)
         return res.status(204).end()
 
       default:
@@ -107,6 +107,10 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('API Error:', error)
-    return res.status(500).json({ error: 'Internal server error', details: error.message })
+    return res.status(500).json({
+      error: 'Internal server error',
+      details: error.message,
+      hint: 'Make sure to set up Vercel KV storage in your Vercel dashboard'
+    })
   }
 }
